@@ -102,7 +102,7 @@
                                 success:true,
                                 data : {
                                     token : libs.jwt.sign({}, 'shhhhh', {
-                                        subject : user.email
+                                        subject : user.id
                                     })
                                 }
                             });
@@ -137,24 +137,33 @@
 
             this.srv.get('/find', function(req, res){
 
-                var q = new QBEQuery();
+                var q = new QBEQuery(),
+                    response = {
+                        success : false
+                    },
+                    currentUser = self._validateToken(req.query._t);
 
-                q.setKinds([req.query.kind]);
+                if (currentUser) {
 
-                if (req.query.filters) {
-                    for (var prop in req.query.filters) {
-                        if( obj.hasOwnProperty( prop ) ) {
-                            q.setFilter(prop, req.query.filters[prop]);
+                    q.setKinds([req.query.kind]);
+
+                    if (req.query.filters) {
+                        for (var prop in req.query.filters) {
+                            if( obj.hasOwnProperty( prop ) ) {
+                                q.setFilter(prop, req.query.filters[prop]);
+                            }
                         }
                     }
-                }
 
-                self._dsQuery(q, function(resp){
-                    res.json({
-                        success : true,
-                        data : resp
-                    })
-                });
+                    self._dsQuery(q, function(resp){
+                        response.success = true;
+                        response['data'] = resp;
+                        res.json(response)
+                    });
+
+                } else {
+                    res.json(response);
+                }
 
             });
 
@@ -163,13 +172,23 @@
             this.srv.post('/save', function(req, res){
 
                 var postData = req.body,
-                    newEntity = new QBEEntity(postData.kind);
+                    newEntity = new QBEEntity(postData.kind),
+                    currentUser = self._validateToken(postData._t);
 
-                newEntity.setParameters(postData.properties);
+                if (currentUser) {
 
-                self._dsCommit(newEntity, function(resp){
-                    res.json(resp);
-                });
+                    newEntity.setParameters(postData.properties);
+
+                    self._dsCommit(newEntity, function(resp){
+                        res.json(resp);
+                    });
+
+
+                } else {
+                    res.json({
+                        success : false
+                    });
+                }
 
             });
 
@@ -228,6 +247,22 @@
             }
 
             return results;
+
+        },
+
+        _validateToken : function(token) {
+
+            var user = false;
+
+            var decode = libs.jwt.verify(token, 'shhhhh');
+
+            if (decode) {
+                user = {
+                    id : decode.sub
+                };
+            }
+
+            return user;
 
         }
 
