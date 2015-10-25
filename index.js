@@ -97,8 +97,15 @@
                 self._dsQuery(q, function(resp){
                     if (resp.length >= 1) {
                         var user = resp[0];
-                        if (libs.bcrypt.compareSync(postData.password, user.properties.password.stringValue)) {
-                            res.json({success:true});
+                        if (libs.bcrypt.compareSync(postData.password, user.password.stringValue)) {
+                            res.json({
+                                success:true,
+                                data : {
+                                    token : libs.jwt.sign({}, 'shhhhh', {
+                                        subject : user.email
+                                    })
+                                }
+                            });
                         } else {
                             res.json({success:false});
                         }
@@ -128,15 +135,44 @@
 
             //get
 
-            this.srv.get(/([A-Za-z])+/, function(){
+            this.srv.get('/find', function(req, res){
 
-                console.log('yah');
+                var q = new QBEQuery();
+
+                q.setKinds([req.query.kind]);
+
+                if (req.query.filters) {
+                    for (var prop in req.query.filters) {
+                        if( obj.hasOwnProperty( prop ) ) {
+                            q.setFilter(prop, req.query.filters[prop]);
+                        }
+                    }
+                }
+
+                self._dsQuery(q, function(resp){
+                    res.json({
+                        success : true,
+                        data : resp
+                    })
+                });
 
             });
 
-            //getter
+            //insert
 
-            //poster
+            this.srv.post('/save', function(req, res){
+
+                var postData = req.body,
+                    newEntity = new QBEEntity(postData.kind);
+
+                newEntity.setParameters(postData.properties);
+
+                self._dsCommit(newEntity, function(resp){
+                    res.json(resp);
+                });
+
+            });
+
 
         },
 
@@ -184,7 +220,10 @@
 
             for (var i = 0; i < arr.length; i++) {
                 if (arr[i].entity) {
-                    results.push(arr[i].entity);
+                    var formatted = arr[i].entity.properties;
+                    formatted['id'] = arr[i].entity.key.path[0].id;
+                    formatted['kind'] = arr[i].entity.key.path[0].kind;
+                    results.push(formatted);
                 }
             }
 
