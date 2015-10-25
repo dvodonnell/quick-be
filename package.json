@@ -1,0 +1,26 @@
+{
+  "name": "quick-be",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://dvodonnell@github.com/dvodonnell/quick-be.git"
+  },
+  "author": "Dan O'Donnell <dan@dvoc.ca> (http://dvoc.ca)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dvodonnell/quick-be/issues"
+  },
+  "homepage": "https://github.com/dvodonnell/quick-be",
+  "dependencies": {
+    "bcrypt-nodejs": "0.0.3",
+    "body-parser": "^1.14.1",
+    "express": "^4.13.3",
+    "googleapis": "^2.1.5",
+    "jsonwebtoken": "^5.4.0"
+  }
+}
